@@ -1,7 +1,6 @@
 import os
 import sys
 import csv
-import shutil
 import datetime
 
 # 
@@ -34,7 +33,23 @@ if not os.path.exists(workingdirectory_result_del):
 
 #
 # STEP3: copy target files
-def recursive_copy(from_t,to_t):
+def job_avg(inputfile,outputfile,method):
+    with open(inputfile, "r") as csvfile_in:
+        with open(outputfile, 'w') as csvfile_out:
+            reader = csv.reader(csvfile_in, delimiter=' ', quotechar='|')
+            writer = csv.writer(csvfile_out)
+            for row in reader:
+                if method:
+                    # calculate here the average
+                    ok = True
+                else:
+                    # detect here if one needs to delete the row
+                    ok = False
+                if ok:
+                    writer.writerow(row)
+    return
+
+def recursive_copy(from_t,to_t,method):
     if not os.path.exists(from_t):
         return
     if not os.path.exists(to_t):
@@ -44,17 +59,9 @@ def recursive_copy(from_t,to_t):
         new_to_t = to_t + "/" + filename
         print("Copy "+new_from_t+" to "+new_to_t)
         if os.path.isdir(new_from_t):
-            recursive_copy(new_from_t,new_to_t)
-        if os.path.isfile(new_from_t) and not os.path.exists(new_to_t):
-            shutil.copyfile(new_from_t,new_to_t)
+            recursive_copy(new_from_t,new_to_t,method)
+        if os.path.isfile(new_from_t):
+            job_avg(new_from_t,new_to_t,method)
 
-recursive_copy(workingdirectory_data,workingdirectory_result_avg)
-recursive_copy(workingdirectory_data,workingdirectory_result_del)
-
-
-#
-# STEP4: parse average files
-
-
-#
-# STEP5: parse delete files
+recursive_copy(workingdirectory_data,workingdirectory_result_avg,True)
+recursive_copy(workingdirectory_data,workingdirectory_result_del,False)
