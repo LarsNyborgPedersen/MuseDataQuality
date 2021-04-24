@@ -2,6 +2,8 @@ import os
 import sys
 import csv
 import datetime
+import decimal
+
 
 # 
 # STEP1: get filepaths
@@ -46,9 +48,12 @@ def find_next_row(all_rows, index):
 # Determine if row has to be replaced
 def replacerow(row):
     replace = False
-    for x in range(1,4):
-        if row[x] == "0.0" or row[x] =="":
-            replace = True
+    if len(row) < 2:
+        replace = True
+    else:
+        for x in range(1,4):
+            if row[x] == "0.0" or row[x] =="":
+                replace = True
 
     return replace
 
@@ -56,11 +61,20 @@ def replacerow(row):
 # STEP3: copy target files
 def find_average_row(previous_row, current_row, next_row):
     average_row = current_row
-    for x in range(1, 24):
-        try:
-            average_row[x] = str(float(previous_row[x]) + float(next_row[x]) / 2)
-        except ValueError:
-            pass
+    if len(previous_row) >= 25 and len(next_row) >= 25:
+        for x in range(1, 24):
+            try:
+                previous = float(previous_row[x])
+                next = float(next_row[x])
+
+
+
+                average = (previous + next) / 2
+
+
+                average_row[x] = str(average)[:15]
+            except ValueError:
+                pass
     return average_row
 
 
@@ -80,8 +94,8 @@ def job_avg(inputfile, outputfile, find_average):
             for index, item in enumerate(all_rows):
 
                 #Always write the header
-                if(index == 0):
-                    writer.writerow(item)
+                #if(index == 0):
+                #    writer.writerow(item)
 
                 if replacerow(item):
 
@@ -95,10 +109,8 @@ def job_avg(inputfile, outputfile, find_average):
                         current_row = item
                         next_row = find_next_row(all_rows, index)
 
-                        if False:
+                        if replacerow(previous_row) or replacerow(next_row) or previous_row[1] == "Delta_TP9":
                             pass
-                        #if len(next_row) == 0 or not previous_row[1].isdecimal() or not next_row[1].isdecimal():
-                        #    pass
                         else:
                             average_row = find_average_row(previous_row, current_row, next_row)
                             writer.writerow(average_row)
