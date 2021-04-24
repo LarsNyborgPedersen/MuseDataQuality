@@ -6,7 +6,7 @@ import datetime
 # 
 # STEP1: get filepaths
 now = datetime.datetime.now()
-timestamp = now.strftime("%Y_%m_%d")
+timestamp = now.strftime("%Y_%m_%d_%h_TIME_%H_%M_%S")
 workingdirectory_base = os.getcwd()
 workingdirectory_data = workingdirectory_base + "/Data"
 workingdirectory_result_avg = workingdirectory_base + "/Results_average_" + timestamp
@@ -31,25 +31,86 @@ if not os.path.exists(workingdirectory_result_del):
     print("ResultDel directory does not exists... creating...")
     os.mkdir(workingdirectory_result_del)
 
+
+def find_next_row(all_rows, index):
+    row_to_return = []
+    for x in range(index, len(all_rows)):
+        currently_examined_row = all_rows[x]
+        if not replacerow(all_rows[x]):
+            return all_rows[x]
+
+    return row_to_return
+
+
+
+# Determine if row has to be replaced
+def replacerow(row):
+    replace = False
+    for x in range(1,4):
+        if row[x] == "0.0" or row[x] =="":
+            replace = True
+
+    return replace
+
 #
 # STEP3: copy target files
-def job_avg(inputfile,outputfile,method):
+def find_average_row(previous_row, current_row, next_row):
+    average_row = current_row
+    for x in range(1, 24):
+        try:
+            average_row[x] = str(float(previous_row[x]) + float(next_row[x]) / 2)
+        except ValueError:
+            pass
+    return average_row
+
+
+
+def job_avg(inputfile, outputfile, find_average):
     with open(inputfile, "r") as csvfile_in:
         with open(outputfile, 'w') as csvfile_out:
-            reader = csv.reader(csvfile_in, delimiter=' ', quotechar='|')
+            reader = csv.reader(csvfile_in, delimiter=',', quotechar='|')
             writer = csv.writer(csvfile_out)
+
+            #Put all rows in list all_rows
+            all_rows = []
             for row in reader:
-                if method:
-                    # calculate here the average
-                    ok = True
+                all_rows.append(row)
+
+            #Write row as normal, average or delete it
+            for index, item in enumerate(all_rows):
+
+                #Always write the header
+                if(index == 0):
+                    writer.writerow(item)
+
+                if replacerow(item):
+
+                    # Passing is the same as deleting the line
+                    if not find_average:
+                        pass
+
+                    # If we need the average
+                    if find_average:
+                        previous_row = all_rows[index-1]
+                        current_row = item
+                        next_row = find_next_row(all_rows, index)
+
+                        if False:
+                            pass
+                        #if len(next_row) == 0 or not previous_row[1].isdecimal() or not next_row[1].isdecimal():
+                        #    pass
+                        else:
+                            average_row = find_average_row(previous_row, current_row, next_row)
+                            writer.writerow(average_row)
+
+
                 else:
-                    # detect here if one needs to delete the row
-                    ok = False
-                if ok:
-                    writer.writerow(row)
+                    writer.writerow(item)
+
+
     return
 
-def recursive_copy(from_t,to_t,method):
+def recursive_copy(from_t, to_t, find_average):
     if not os.path.exists(from_t):
         return
     if not os.path.exists(to_t):
@@ -59,9 +120,14 @@ def recursive_copy(from_t,to_t,method):
         new_to_t = to_t + "/" + filename
         print("Copy "+new_from_t+" to "+new_to_t)
         if os.path.isdir(new_from_t):
-            recursive_copy(new_from_t,new_to_t,method)
+            recursive_copy(new_from_t, new_to_t, find_average)
         if os.path.isfile(new_from_t):
-            job_avg(new_from_t,new_to_t,method)
+            job_avg(new_from_t, new_to_t, find_average)
 
 recursive_copy(workingdirectory_data,workingdirectory_result_avg,True)
 recursive_copy(workingdirectory_data,workingdirectory_result_del,False)
+
+
+
+
+
