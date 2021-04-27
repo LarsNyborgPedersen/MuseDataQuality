@@ -80,8 +80,10 @@ def find_average_row(previous_row, current_row, next_row):
 
 
 def job_avg(inputfile, outputfile, find_average):
+    lines = 0
+
     with open(inputfile, "r") as csvfile_in:
-        with open(outputfile, 'w') as csvfile_out:
+        with open(outputfile, 'w', newline = '') as csvfile_out:
             reader = csv.reader(csvfile_in, delimiter=',', quotechar='|')
             writer = csv.writer(csvfile_out)
 
@@ -114,15 +116,20 @@ def job_avg(inputfile, outputfile, find_average):
                         else:
                             average_row = find_average_row(previous_row, current_row, next_row)
                             writer.writerow(average_row)
+                            lines += 1
 
 
                 else:
                     writer.writerow(item)
+                    lines += 1
 
 
-    return
+    return lines
 
 def recursive_copy(from_t, to_t, find_average):
+    linesRequired = 2000
+    filesWithEnoughLines = 0
+
     if not os.path.exists(from_t):
         return
     if not os.path.exists(to_t):
@@ -134,7 +141,12 @@ def recursive_copy(from_t, to_t, find_average):
         if os.path.isdir(new_from_t):
             recursive_copy(new_from_t, new_to_t, find_average)
         if os.path.isfile(new_from_t):
-            job_avg(new_from_t, new_to_t, find_average)
+            lines = job_avg(new_from_t, new_to_t, find_average)
+            print("Lines: " + str(lines))
+            if (lines >= linesRequired):
+                filesWithEnoughLines += 1
+    print("Files with more than " + str(linesRequired) + "lines: " + str(filesWithEnoughLines))
+
 
 recursive_copy(workingdirectory_data,workingdirectory_result_avg,True)
 recursive_copy(workingdirectory_data,workingdirectory_result_del,False)
