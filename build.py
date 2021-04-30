@@ -122,6 +122,9 @@ def job_avg(inputfile, outputfile, find_average):
                 else:
                     writer.writerow(item)
                     lines += 1
+    if lines < 2000:
+        os.remove(outputfile)
+        print("Removing: " + outputfile)
 
 
     return lines
