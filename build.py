@@ -51,7 +51,7 @@ def replacerow(row):
     if len(row) < 2:
         replace = True
     else:
-        for x in range(1,4):
+        for x in range(1,31):
             if row[x] == "0.0" or row[x] =="":
                 replace = True
 
